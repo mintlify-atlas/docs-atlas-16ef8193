@@ -1,0 +1,84 @@
+---
+title: "MATLAB API reference: multitaper_spectrogram()"
+description: "Parameter and return value reference for the MATLAB multitaper_spectrogram and multitaper_spectrogram_mex functions."
+---
+
+The MATLAB implementation provides two functions with identical inputs: `multitaper_spectrogram` (double precision, parallelized) and `multitaper_spectrogram_mex` (single precision, C-accelerated). Both live in the `matlab/` folder; the MEX variant also requires `mex_files/` on the MATLAB path.
+
+## multitaper_spectrogram
+
+```matlab
+[spect, stimes, sfreqs] = multitaper_spectrogram(data, Fs, frequency_range, taper_params, window_params, min_NFFT, detrend_opt, weighting, plot_on, verbose)
+```
+
+### Parameters
+
+<ParamField path="data" type="Nx1 vector" required>
+  Time series data as a column vector.
+</ParamField>
+
+<ParamField path="Fs" type="double" required>
+  Sampling frequency in Hz.
+</ParamField>
+
+<ParamField path="frequency_range" type="1x2 vector" default="[0, Nyquist]">
+  `[min_frequency, max_frequency]` in Hz.
+</ParamField>
+
+<ParamField path="taper_params" type="1x2 vector" default="[5, 9]">
+  `[time_halfbandwidth_product, num_tapers]`. Optimal num_tapers = `floor(2*TW) - 1`.
+</ParamField>
+
+<ParamField path="window_params" type="1x2 vector" default="[5, 1]">
+  `[window_size_seconds, step_size_seconds]`.
+</ParamField>
+
+<ParamField path="min_NFFT" type="double" default="0">
+  Minimum NFFT size. Zero-pads to nearest 2^x at or above this value.
+</ParamField>
+
+<ParamField path="detrend_opt" type="string" default="'linear'">
+  `'linear'`, `'constant'`, or `'off'`.
+</ParamField>
+
+<ParamField path="weighting" type="string" default="'unity'">
+  `'unity'`, `'eigen'`, or `'adapt'`.
+</ParamField>
+
+<ParamField path="plot_on" type="boolean" default="true">
+  Plot the spectrogram after computation.
+</ParamField>
+
+<ParamField path="verbose" type="boolean" default="true">
+  Print spectrogram properties before computation.
+</ParamField>
+
+### Returns
+
+<ResponseField name="spect" type="F×T matrix">
+  Spectral power matrix. Rows are frequency bins, columns are time bins.
+</ResponseField>
+
+<ResponseField name="stimes" type="1×T vector">
+  Center times (seconds) of each spectral window.
+</ResponseField>
+
+<ResponseField name="sfreqs" type="1×F vector">
+  Frequency bin values (Hz).
+</ResponseField>
+
+## multitaper_spectrogram_mex
+
+```matlab
+[spect, stimes, sfreqs] = multitaper_spectrogram_mex(data, Fs, frequency_range, taper_params, window_params, min_NFFT, detrend_opt, weighting, plot_on, verbose)
+```
+
+Identical inputs and outputs to `multitaper_spectrogram`. The MEX version is implemented in C and is significantly faster, but reduces data precision from **double to single**.
+
+<Warning>
+  The `mex_files/` subdirectory must be on your MATLAB path. Compiled binaries are provided for: `.mexmaci64` (64-bit Mac), `.mexw64` (64-bit Windows), `.mexa64` (64-bit Linux).
+</Warning>
+
+<Note>
+  See the [MATLAB guide](/guides/matlab) for path setup instructions and the [parameters reference](/concepts/parameters) for parameter details.
+</Note>

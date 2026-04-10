@@ -1,97 +1,69 @@
 ---
-title: "Introduction"
-description: "Welcome to the new home for your documentation"
+title: "Multitaper Toolbox: High-Resolution Spectral Analysis"
+description: "Open-source multitaper spectrogram toolbox for EEG and time-series analysis. Available in Python, MATLAB, and R with parallel processing support."
 ---
 
-## Setting up
+The Multitaper Toolbox provides scientifically rigorous spectral estimation for time-series data using the multitaper method — the gold standard for reducing spectral variance in EEG, neural recordings, and physiological signals. Originally developed for sleep neurophysiology research at the Prerau Lab, it is available in Python, MATLAB, and R with identical parameter interfaces across all three implementations.
 
-Get your documentation site up and running in minutes.
-
-<Card
-  title="Start here"
-  icon="rocket"
-  href="/quickstart"
-  horizontal
->
-  Follow our three step quickstart guide.
-</Card>
-
-## Make it yours
-
-Design a docs site that looks great and empowers your users.
-
-<Columns cols={2}>
-  <Card
-    title="Edit locally"
-    icon="pen-to-square"
-    href="/development"
-  >
-    Edit your docs locally and preview them in real time.
+<CardGroup cols={2}>
+  <Card title="Introduction" icon="book-open" href="/introduction">
+    Learn what the multitaper method is, why it outperforms single-taper methods, and when to use this toolbox.
   </Card>
-  <Card
-    title="Customize your site"
-    icon="palette"
-    href="/essentials/settings"
-  >
-    Customize the design and colors of your site to match your brand.
+  <Card title="Quickstart" icon="rocket" href="/quickstart">
+    Run your first multitaper spectrogram in minutes with a working code example.
   </Card>
-    <Card
-    title="Set up navigation"
-    icon="map"
-    href="/essentials/navigation"
-  >
-    Organize your docs to help users find what they need and succeed with your product.
+  <Card title="Multitaper Theory" icon="wave-sine" href="/concepts/multitaper-theory">
+    Understand DPSS tapers, spectral variance reduction, and the mathematics behind the method.
   </Card>
-  <Card
-    title="API documentation"
-    icon="terminal"
-    href="/api-reference/introduction"
-  >
-    Auto-generate API documentation from OpenAPI specifications.
+  <Card title="Parameters Guide" icon="sliders" href="/concepts/parameters">
+    Detailed explanations of every parameter: time-bandwidth product, tapers, window size, and more.
   </Card>
-</Columns>
+</CardGroup>
 
-## Create beautiful pages
+## Choose your language
 
-Everything you need to create world-class documentation.
+<CardGroup cols={3}>
+  <Card title="Python" icon="python" href="/guides/python">
+    NumPy-based implementation with optional multiprocessing via `joblib`.
+  </Card>
+  <Card title="MATLAB" icon="square-m" href="/guides/matlab">
+    Parallelized implementation plus a C-accelerated MEX variant for maximum speed.
+  </Card>
+  <Card title="R" icon="r-project" href="/guides/r">
+    Implementation using R's `parallel` and `doParallel` libraries.
+  </Card>
+</CardGroup>
 
-<Columns cols={2}>
-  <Card
-    title="Write with MDX"
-    icon="pen-fancy"
-    href="/essentials/markdown"
-  >
-    Use MDX to style your docs pages.
-  </Card>
-  <Card
-    title="Code samples"
-    icon="code"
-    href="/essentials/code"
-  >
-    Add sample code to demonstrate how to use your product.
-  </Card>
-  <Card
-    title="Images"
-    icon="image"
-    href="/essentials/images"
-  >
-    Display images and other media.
-  </Card>
-  <Card
-    title="Reusable snippets"
-    icon="recycle"
-    href="/essentials/reusable-snippets"
-  >
-    Write once and reuse across your docs.
-  </Card>
-</Columns>
+## Key features
 
-## Need inspiration?
+<CardGroup cols={2}>
+  <Card title="Superior spectral estimation" icon="chart-line">
+    DPSS tapers produce spectra with lower variance than single-taper or periodogram methods, making weak oscillations visible in noisy signals.
+  </Card>
+  <Card title="Flexible taper weighting" icon="weight-scale">
+    Choose from unity, eigenvalue, or adaptive weighting to balance spectral resolution and leakage suppression.
+  </Card>
+  <Card title="Parallel processing" icon="microchip">
+    All three implementations support multiprocessing for fast computation over long recordings.
+  </Card>
+  <Card title="Cross-language consistency" icon="arrows-left-right">
+    Python, MATLAB, and R results agree to within 10⁻⁹, so you can switch languages without changing your science.
+  </Card>
+</CardGroup>
 
-<Card
-  title="See complete examples"
-  icon="stars"
-  href="https://mintlify.com/customers"
->
-  Browse our showcase of exceptional documentation sites.
-</Card>
+## Reference
+
+<CardGroup cols={2}>
+  <Card title="Python API reference" icon="code" href="/reference/python-api">
+    Full parameter and return value documentation for the Python implementation.
+  </Card>
+  <Card title="MATLAB API reference" icon="square-m" href="/reference/matlab-api">
+    Full parameter and return value documentation for both MATLAB functions.
+  </Card>
+  <Card title="R API reference" icon="r-project" href="/reference/r-api">
+    Full parameter and return value documentation for the R implementation.
+  </Card>
+  <Card title="Citations" icon="graduation-cap" href="/reference/citations">
+    How to cite this toolbox and the underlying scientific literature.
+  </Card>
+</CardGroup>

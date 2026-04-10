@@ -1,0 +1,27 @@
+---
+title: "Numerical precision across Python, MATLAB, and R"
+description: "Cross-language accuracy figures for the multitaper toolbox: Python, MATLAB, and R implementations agree to within 10⁻⁹ on typical inputs."
+---
+
+All three implementations of the multitaper spectrogram produce numerically consistent results. Small floating-point differences arise from language-specific math library implementations, but these are orders of magnitude smaller than any physical signal of interest.
+
+## Precision comparison
+
+The figures below are based on direct data-point comparisons between implementations:
+
+| Comparison | Mean difference | Standard deviation |
+|---|---|---|
+| Python vs. MATLAB | ≤ 10⁻¹³ | ≤ 10⁻¹⁰ |
+| Python vs. R | ≤ 10⁻¹¹ | ≤ 10⁻⁹ |
+
+<Info>
+  These differences are irrelevant for practical use. All three implementations are interchangeable for scientific analysis.
+</Info>
+
+## MEX implementation note
+
+The `multitaper_spectrogram_mex` function in MATLAB reduces data precision from **double to single** internally for speed. Results from the MEX implementation will therefore differ from double-precision Python and MATLAB results by approximately 10⁻⁷. This is a deliberate trade-off for significantly faster computation.
+
+<Tip>
+  Use `multitaper_spectrogram` (not the MEX variant) if you need to validate results across languages to double-precision accuracy.
+</Tip>

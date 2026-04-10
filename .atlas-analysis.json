@@ -1,0 +1,70 @@
+{
+  "projectType": "ai-ml",
+  "projectName": "Multitaper Toolbox",
+  "projectDescription": "A multitaper spectral estimation toolbox for EEG and time-series analysis, implemented in Python, MATLAB, and R.",
+  "theme": "luma",
+  "primaryColor": "#040404",
+  "lightColor": null,
+  "darkColor": null,
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Concepts",
+            "pages": [
+              "concepts/multitaper-theory",
+              "concepts/parameters"
+            ]
+          },
+          {
+            "group": "Guides",
+            "pages": [
+              "guides/python",
+              "guides/matlab",
+              "guides/r",
+              "guides/parallel-processing",
+              "guides/edf-data"
+            ]
+          },
+          {
+            "group": "Reference",
+            "pages": [
+              "reference/python-api",
+              "reference/matlab-api",
+              "reference/r-api",
+              "reference/numerical-differences",
+              "reference/citations"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "Multitaper spectral estimation using DPSS (Slepian) tapers",
+    "Implementations in Python, MATLAB, and R",
+    "Optional parallel/multiprocessing support in all languages",
+    "Configurable taper weighting: unity, eigenvalue, and adaptive",
+    "Sliding window spectrogram with configurable window size and step",
+    "Built-in plotting with dB-scaled colormap output",
+    "EDF file reading support (Python)",
+    "C-accelerated MEX implementation for MATLAB"
+  ],
+  "publicApiSurface": [
+    "multitaper_spectrogram(data, fs, frequency_range, time_bandwidth, num_tapers, window_params, min_nfft, detrend_opt, multiprocess, n_jobs, weighting, plot_on, return_fig, clim_scale, verbose, xyflip) -> (mt_spectrogram, stimes, sfreqs) [Python]",
+    "multitaper_spectrogram(data, Fs, frequency_range, taper_params, window_params, min_NFFT, detrend_opt, weighting, plot_on, verbose) -> [spect, stimes, sfreqs] [MATLAB]",
+    "multitaper_spectrogram_mex(data, Fs, frequency_range, taper_params, window_params, min_NFFT, detrend_opt, weighting, plot_on, verbose) -> [spect, stimes, sfreqs] [MATLAB MEX]",
+    "multitaper_spectrogram_R(data, fs, frequency_range, time_bandwidth, num_tapers, window_params, min_nfft, weighting, detrend_opt, parallel, num_workers, plot_on, verbose, xyflip) -> list(spect, stimes, sfreqs) [R]",
+    "nanpow2db(y) -> ydB [Python helper]",
+    "calc_mts_segment(data_segment, dpss_tapers, nfft, freq_inds, detrend_opt, num_tapers, dpss_eigen, weighting, wt) [Python internal]"
+  ]
+}

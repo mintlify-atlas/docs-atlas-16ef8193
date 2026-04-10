@@ -1,0 +1,148 @@
+---
+title: "Multitaper spectrogram parameter reference"
+description: "Complete reference for every parameter accepted by the multitaper spectrogram function across Python, MATLAB, and R implementations."
+---
+
+The multitaper spectrogram function accepts a small set of parameters that control the statistical and temporal properties of the spectral estimate. Most parameters have sensible defaults and require no tuning for standard EEG analysis, but understanding what each parameter does — and how they interact — lets you adapt the analysis to your specific signal and research question. This page documents every parameter across the Python, MATLAB, and R implementations.
+
+<Note>
+All three implementations (Python, MATLAB, R) share the same parameter semantics. The only differences are language-specific naming conventions: Python and R use `time_bandwidth` and `num_tapers` as separate arguments, while MATLAB combines them into a `taper_params` vector `[time_bandwidth, num_tapers]`.
+</Note>
+
+## Required parameters
+
+<ParamField path="data" type="array" required>
+  The input time-series signal. Must be one-dimensional.
+
+  - **Python**: `1d np.array` with shape `(n,)`
+  - **MATLAB**: column vector of size `<number of samples> × 1`
+  - **R**: numeric vector
+
+  The data must be longer than one window. If the array is two-dimensional but one dimension has length 1, the Python implementation will automatically flatten it.
+</ParamField>
+
+<ParamField path="fs" type="float" required>
+  Sampling frequency of the input data, in Hz. Determines the Nyquist limit (`fs / 2`), which is the highest frequency that can be represented.
+
+  - **Python / R**: `fs`
+  - **MATLAB**: `Fs`
+
+  If the upper bound of `frequency_range` exceeds the Nyquist limit, it is automatically clipped to `fs / 2` and a warning is issued. Setting `fs` incorrectly will silently scale all frequency and time axes.
+</ParamField>
+
+## Spectral resolution parameters
+
+<ParamField path="time_bandwidth" type="float" default="5">
+  The time-half bandwidth product (TW). This is the fundamental spectral resolution parameter.
+
+  - **Python / R**: `time_bandwidth`
+  - **MATLAB**: first element of `taper_params`, i.e. `taper_params(1)`
+
+  TW is computed as `N × (BW / 2)`, where N is the window length in seconds and BW is the bandwidth of the main lobe. The bandwidth BW is also called the **frequency resolution** because it sets the minimum detectable frequency difference: `frequency_resolution = 2 × TW / window_length_seconds` Hz.
+
+  A larger TW gives a wider main lobe (lower frequency resolution) but more independent tapers available (lower variance). A smaller TW gives sharper frequency resolution but requires fewer tapers, increasing variance.
+
+  Common choices:
+
+  | TW | Optimal tapers | Frequency resolution (5 s window) |
+  |----|---------------|-----------------------------------|
+  | 3  | 5             | 1.2 Hz                            |
+  | 4  | 7             | 1.6 Hz                            |
+  | 5  | 9             | 2.0 Hz                            |
+</ParamField>
+
+<ParamField path="num_tapers" type="integer" default="floor(2 × time_bandwidth) − 1">
+  Number of DPSS tapers to use. The optimal value is `floor(2 × TW) − 1`.
+
+  - **Python / R**: `num_tapers`
+  - **MATLAB**: second element of `taper_params`, i.e. `taper_params(2)`
+
+  Using **more tapers than optimal** increases bias: the extra tapers have poor frequency concentration and their spectra no longer represent the target bandwidth. Using **fewer tapers than optimal** discards independent spectral estimates and increases variance unnecessarily. A warning is issued when `num_tapers` differs from the optimal value.
+
+  If `num_tapers` is not provided (Python/R) or left at its default (MATLAB `[5 9]`), it is computed automatically from `time_bandwidth`.
+</ParamField>
+
+## Window parameters
+
+<ParamField path="window_params" type="array" default="[5, 1]">
+  `[window_size_seconds, step_size_seconds]`. Controls the temporal resolution and overlap of the spectrogram.
+
+  - `window_size_seconds`: length of each analysis window. Longer windows improve **frequency resolution** (because `frequency_resolution = 2 × TW / window_size`) at the cost of **temporal resolution** (changes within a window are averaged together).
+  - `step_size_seconds`: how far the window advances between consecutive spectral estimates. Smaller steps produce finer temporal resolution in the output spectrogram but increase computation time proportionally. Steps smaller than the window size create overlapping windows.
+
+  The tradeoff between temporal and spectral resolution is fundamental: you cannot improve both simultaneously without changing `time_bandwidth`.
+</ParamField>
+
+<ParamField path="frequency_range" type="array" default="[0, fs/2]">
+  `[min_frequency_hz, max_frequency_hz]`. Restricts the output spectrogram to the specified frequency band.
+
+  Limiting the range to the band of interest (for example `[0, 25]` for EEG sleep analysis) reduces the size of the output matrix and speeds up computation. The FFT is still computed at full resolution; this parameter controls which frequencies are returned, not the spectral computation itself.
+
+  If the upper bound exceeds the Nyquist limit (`fs / 2`), it is silently clipped.
+</ParamField>
+
+<ParamField path="min_nfft" type="integer" default="0">
+  Minimum FFT size. The toolbox automatically zero-pads each window to the nearest power of 2 at or above the window length in samples, which ensures FFT efficiency. Setting `min_nfft` to a larger power of 2 forces additional zero-padding, which **interpolates** the frequency axis (adds more frequency bins between true spectral samples) without changing the underlying resolution.
+
+  Use this parameter when you need a finer frequency grid in the output — for example, to produce smoother-looking spectrograms or to align frequency bins with a specific grid. Setting `min_nfft = 0` (the default) uses the smallest power of 2 that fits the window.
+</ParamField>
+
+## Processing options
+
+<ParamField path="detrend_opt" type="string" default="'linear'">
+  Detrending method applied to each data window before spectral estimation. Detrending removes slowly varying trends and DC offsets that would otherwise produce artifactual low-frequency power.
+
+  - `'linear'` (default): fits a least-squares line to the window and subtracts it. Removes linear drifts and DC offset simultaneously.
+  - `'constant'`: subtracts the window mean, setting the window to zero-mean. Equivalent to removing the DC component only.
+  - `'off'`: no detrending. Use this only if your data has already been preprocessed or if you need to preserve low-frequency content.
+
+  For most EEG and physiological signal applications, `'linear'` is the appropriate choice.
+</ParamField>
+
+<ParamField path="weighting" type="string" default="'unity'">
+  How to weight each taper's spectral estimate when computing the mean across tapers.
+
+  - `'unity'`: all tapers contribute equally (weight = `1 / num_tapers`). Recommended for most use cases.
+  - `'eigen'`: weights each taper by its eigenvalue (frequency concentration). Minimal practical difference since optimal DPSS eigenvalues are close to 1.
+  - `'adapt'`: adaptive weighting to reduce broadband leakage for colored noise. Minimal practical difference but included for completeness.
+
+  See [Multitaper spectral estimation: theory and advantages](/concepts/multitaper-theory) for a detailed explanation of each method.
+</ParamField>
+
+<ParamField path="multiprocess" type="boolean" default="false">
+  **Python only.** Enable parallel processing of windows using `joblib`. When `True`, windows are distributed across multiple CPU cores. Useful for long recordings or when real-time performance is required.
+
+  Has no effect if `False` (default). Requires the `joblib` package.
+</ParamField>
+
+<ParamField path="n_jobs" type="integer" default="None">
+  **Python only.** Number of CPU cores to use when `multiprocess=True`. When left as `None` (default), uses all available cores minus 1 to leave one core free for the operating system.
+
+  Ignored if `multiprocess=False`.
+</ParamField>
+
+## Output options
+
+<ParamField path="plot_on" type="boolean" default="True">
+  Whether to automatically plot the computed spectrogram. When `True`, the function renders the spectrogram as a 2D image with time on the x-axis, frequency on the y-axis, and power (in dB) encoded as color.
+
+  Set to `False` when running in batch mode, in scripts without a display, or when you want to handle visualization yourself using the returned matrix.
+</ParamField>
+
+<ParamField path="verbose" type="boolean" default="True">
+  Whether to print computed spectrogram properties to stdout after computation. The printed summary includes spectral resolution, window length, window step, time-half bandwidth product, number of tapers, frequency range, NFFT size, and detrend option.
+
+  Useful for confirming parameter choices. Set to `False` in production pipelines.
+</ParamField>
+
+<ParamField path="xyflip" type="boolean" default="False">
+  **Python and R only.** If `True`, the output spectrogram matrix is transposed so that rows correspond to time and columns to frequency (shape `T × F`). By default the output is `F × T` (frequency rows, time columns).
+
+  Use `xyflip=True` when downstream code expects time-major ordering.
+</ParamField>
+
+---
+
+<Tip>
+**Choosing `time_bandwidth` for EEG**: a `time_bandwidth` of 3–5 with the corresponding optimal `num_tapers` (`floor(2 × TW) − 1` = 5 or 9) works well for most EEG applications. For sleep EEG, `time_bandwidth=5` with a 5-second window gives 2 Hz frequency resolution and 9 independent spectral estimates per window — a good balance of resolution and variance reduction.
+</Tip>

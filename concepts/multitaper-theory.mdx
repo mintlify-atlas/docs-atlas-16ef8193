@@ -1,0 +1,70 @@
+---
+title: "Multitaper spectral estimation: theory and advantages"
+description: "Understand how the multitaper method works, why it outperforms single-taper periodograms, and how DPSS tapers reduce spectral variance."
+---
+
+Spectral estimation is the process of measuring how power in a time series is distributed across frequency. The quality of a spectral estimate depends on two competing properties: **bias** (how close the estimate is to the true spectrum) and **variance** (how much the estimate fluctuates across repeated observations). In practice, reducing variance without inflating bias requires careful choice of the analysis window — and this is precisely the problem the multitaper method solves.
+
+## The problem with single-taper methods
+
+The simplest spectral estimator is the periodogram: square the magnitude of the Fourier transform of a data segment. While unbiased, the periodogram has a fundamental statistical flaw — its variance does not decrease as data length increases. Every spectral frequency bin is an independent estimate with roughly 2 degrees of freedom regardless of how much data you collect.
+
+Single-taper methods (e.g., Hann or Hamming windows) apply a smooth weight function to the data before computing the FFT. This reduces **spectral leakage** — energy from a strong signal bleeding into neighboring frequency bins — but it does not solve the variance problem. The smoother the taper, the lower the sidelobes (less leakage), but you are still computing a single spectrum from a single tapered segment, leaving variance unchanged.
+
+To reduce variance with a single taper, analysts traditionally averaged spectra across multiple non-overlapping windows. This trades temporal resolution for statistical stability, which is often an unacceptable trade-off in non-stationary signals such as EEG.
+
+## DPSS tapers (Slepian sequences)
+
+The multitaper method, introduced by David Thomson in 1982, sidesteps this trade-off by using multiple orthogonal taper functions computed from the same data window simultaneously.
+
+These tapers are called **discrete prolate spheroidal sequences (DPSS)**, also known as Slepian sequences. They are defined by two properties:
+
+1. **Maximum energy concentration**: each DPSS taper concentrates the maximum possible fraction of its energy within a specified frequency bandwidth (the main lobe). This minimizes spectral leakage by construction.
+2. **Mutual orthogonality**: the tapers are uncorrelated with each other. Spectral estimates produced by different tapers are therefore approximately statistically independent — as if they came from separate experimental trials.
+
+Because the taper-derived spectra are approximately independent, averaging N of them reduces variance by a factor of N, following the standard result for averaging independent random variables. The number of useful DPSS tapers for a given window is bounded by the time-bandwidth product: the optimal number is `floor(2 × TW) − 1`, where TW is the time-half bandwidth product. Beyond this limit, the tapers start to have poor frequency concentration and introduce bias.
+
+<Info>
+The multitaper method was developed by David J. Thomson and published in: Thomson DJ. Spectrum estimation and harmonic analysis. *Proc IEEE* 70: 1055–1096, 1982.
+</Info>
+
+## The multitaper algorithm
+
+The multitaper spectrogram slides a window across the data and computes the following four steps for each window position:
+
+<Steps>
+  <Step title="Compute DPSS tapers based on desired spectral properties">
+    Given the window length in samples and the time-half bandwidth product `TW`, compute `num_tapers` DPSS sequences and their associated eigenvalues (frequency concentration ratios). The eigenvalues are used for optional eigenvalue or adaptive weighting.
+  </Step>
+  <Step title="Multiply the data segment by the DPSS tapers">
+    Apply each taper to the windowed data segment element-wise, producing `num_tapers` tapered versions of the segment. This step shapes the spectral response of each estimate before the FFT.
+  </Step>
+  <Step title="Compute the spectrum for each tapered segment">
+    Take the FFT of each tapered segment and compute the power spectrum (squared magnitude of the FFT coefficients). This yields `num_tapers` independent spectral estimates for the same window of data.
+  </Step>
+  <Step title="Take the mean of the tapered spectra">
+    Average the `num_tapers` power spectra, optionally weighting each taper's contribution by its eigenvalue or using adaptive weights. The result is the multitaper spectral estimate for that window position.
+  </Step>
+</Steps>
+
+## Weighting methods
+
+After computing the per-taper spectra, the toolbox supports three methods for combining them.
+
+<AccordionGroup>
+  <Accordion title="unity (default)">
+    Each taper contributes equally. The weight assigned to taper k is `1 / num_tapers`. This is the simplest and most common choice. Because the tapers are approximately orthogonal and all eigenvalues are close to 1 for the optimal number of tapers, uniform weighting produces results nearly identical to the other methods in most practical settings.
+  </Accordion>
+  <Accordion title="eigen">
+    Each taper is weighted by its eigenvalue (frequency concentration ratio). Tapers with higher eigenvalues — meaning their energy is more tightly concentrated in the target bandwidth — contribute more to the final estimate. In practice the difference from `unity` weighting is minimal because the eigenvalues of the optimal DPSS tapers are very close to 1. This option is included for completeness and for cases where sub-optimal taper counts are used.
+  </Accordion>
+  <Accordion title="adapt">
+    Adaptive weighting reduces broadband leakage for **colored (non-white) noise** spectra. The weights are computed iteratively so that tapers contribute less at frequencies where the current spectral estimate is dominated by leakage from other frequencies. This method is adapted from pages 368–370 of Percival &amp; Walden, *Spectral Analysis for Physical Applications: Multitaper and Conventional Univariate Techniques* (Cambridge University Press, 1993). In practice the adaptive method produces results very close to `unity` weighting for most EEG applications, but it is included for methodological completeness.
+  </Accordion>
+</AccordionGroup>
+
+## References
+
+- Thomson DJ. Spectrum estimation and harmonic analysis. *Proc IEEE* 70: 1055–1096, 1982.
+- Prerau MJ, Brown RE, Bianchi MT, Ellenbogen JM, Purdon PL. Sleep neurophysiological dynamics through the lens of multitaper spectral analysis. *Physiology (Bethesda)*. 2017 Jan;32(1):60–92. DOI: [10.1152/physiol.00062.2015](https://doi.org/10.1152/physiol.00062.2015)
+- Percival DB, Walden AT. *Spectral Analysis for Physical Applications: Multitaper and Conventional Univariate Techniques*. Cambridge University Press, 1993.

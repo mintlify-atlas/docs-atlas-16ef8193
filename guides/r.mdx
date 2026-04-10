@@ -1,0 +1,89 @@
+---
+title: "Multitaper spectrogram: R implementation guide"
+description: "Compute multitaper spectrograms in R using apply-based vectorized operations and optional parallel processing for fast analysis of EEG and time-series data."
+---
+
+The R implementation of the multitaper spectrogram uses R's `apply` family of functions with no explicit for loops and supports optional parallel processing via the `parallel` and `doParallel` packages. The script automatically installs all required dependencies when sourced, so no manual package setup is needed beyond loading the file.
+
+## Dependencies
+
+When you source `multitaper_spectrogram_R.R`, the script automatically checks for and installs the following packages if they are not already present:
+
+- `multitaper`
+- `pracma`
+- `fields`
+- `doParallel`
+- `parallel`
+- `png`
+
+## Loading the function
+
+Source the file to load `multitaper_spectrogram_R` into your R session:
+
+```r
+source("multitaper_spectrogram_R.R")
+```
+
+## Chirp example
+
+The following example generates a 10-minute logarithmic chirp signal and computes its multitaper spectrogram:
+
+```r
+install.packages("signal")
+library(signal)  # get signal library for chirp function
+
+# Set spectrogram params
+fs = 200  # Sampling Frequency
+frequency_range = c(0, 25)  # Limit frequencies from 0 to 25 Hz
+time_bandwidth = 3  # Set time-half bandwidth
+num_tapers = 5  # Set number of tapers (optimal is time_bandwidth*2 - 1)
+window_params = c(4, 1)  # Window size is 4s with step size of 1s
+min_nfft = 0  # No minimum nfft
+weighting = 'unity'  # weight each taper at 1
+detrend_opt = 'constant'  # detrend each window by subtracting the average
+parallel = TRUE  # use multiprocessing
+num_workers = 3  # use 3 cores in multiprocessing
+plot_on = TRUE  # plot spectrogram
+verbose = TRUE  # print extra info
+xyflip = FALSE  # do not transpose spect output matrix
+
+# Generate sample chirp data
+t = seq(1/fs, 600, by=1/fs)  # Create 10 min time array from 1/fs to 600 stepping by 1/fs
+f_start = 1  # Set chirp freq range min (Hz)
+f_end = 20  # Set chirp freq range max (Hz)
+data = chirp(t, f_start, tail(t,n=1), f_end, 'logarithmic')
+
+# Compute the multitaper spectrogram
+results = multitaper_spectrogram_R(data, fs, frequency_range, time_bandwidth, num_tapers, window_params, min_nfft, weighting, detrend_opt, parallel, num_workers,
+                                   plot_on, verbose, xyflip)
+spect = results[[1]]
+stimes = results[[2]]
+sfreqs = results[[3]]
+```
+
+## Return values
+
+The function returns a list with three elements:
+
+| Element | Description |
+|---------|-------------|
+| `results[[1]]` | `spect` — spectral power matrix (time × frequency) |
+| `results[[2]]` | `stimes` — numeric vector of window center times (seconds) |
+| `results[[3]]` | `sfreqs` — numeric vector of frequency bin values (Hz) |
+
+## Parallel processing performance
+
+<Note>
+  Parallel processing in R works fastest on Unix-based systems (macOS and Linux) because these platforms use fork-based process duplication, which allows workers to share memory with the parent process efficiently. Windows machines still benefit from parallel processing, but will see less speedup due to the overhead of spawning separate processes.
+</Note>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Parallel processing" href="/guides/parallel-processing">
+    Learn how to configure the number of parallel workers across all three language implementations.
+  </Card>
+  <Card title="R API reference" href="/reference/r-api">
+    Full parameter and return value documentation for the R function.
+  </Card>
+</CardGroup>

@@ -1,0 +1,59 @@
+---
+title: "Multitaper Toolbox: spectral analysis for neuroscience"
+description: "Open-source Python, MATLAB, and R implementations of multitaper spectral estimation for EEG and time-series analysis with reduced spectral variance."
+---
+
+The Multitaper Toolbox provides implementations of multitaper spectral estimation for analyzing time-series data. Originally developed for sleep neurophysiology research at the Prerau Lab, it is available in Python, MATLAB, and R with identical parameter interfaces across all three languages.
+
+## What is the multitaper method?
+
+The multitaper method works by averaging together multiple independent spectral estimates computed from a single segment of data. Instead of applying a single taper function to compute the spectrum, it applies multiple taper functions called **discrete prolate spheroidal sequences (DPSS)**. Because DPSS tapers are uncorrelated with each other, their resulting spectra can be averaged as if they were independent trials of the same condition — producing a final spectrum with substantially reduced variance.
+
+This approach was developed by David Thomson in 1982 and has been shown to have superior statistical properties compared to single-taper and periodogram methods.
+
+## Why multitaper over single-taper methods?
+
+Standard periodogram and single-taper estimates suffer from high variance: spectral estimates at each frequency are noisy, making it difficult to resolve weak oscillations in the presence of broadband noise. The multitaper method addresses this directly:
+
+- **Lower variance**: averaging across multiple orthogonal DPSS tapers reduces variance without sacrificing frequency resolution
+- **Controlled spectral leakage**: DPSS tapers are optimally concentrated in frequency, minimizing contamination from energy at neighboring frequencies
+- **Tunable resolution**: the time-half bandwidth product controls the trade-off between frequency resolution and variance reduction
+
+In practice, this makes weak oscillations — such as sleep spindles in EEG — visible that would otherwise be buried in noise.
+
+## What this toolbox provides
+
+The toolbox implements the multitaper spectrogram described in the paper ["Sleep Neurophysiological Dynamics Through the Lens of Multitaper Spectral Analysis"](https://doi.org/10.1152/physiol.00062.2015) (DOI: 10.1152/physiol.00062.2015). All three implementations share the same parameter interface and produce numerically consistent results.
+
+<CardGroup cols={3}>
+  <Card title="Python" icon="python" href="/guides/python">
+    NumPy-based implementation with optional multiprocessing via `joblib`. No for loops — fully vectorized.
+  </Card>
+  <Card title="MATLAB" icon="square-m" href="/guides/matlab">
+    Parallelized implementation plus a C-accelerated MEX variant (`multitaper_spectrogram_mex`) for maximum speed.
+  </Card>
+  <Card title="R" icon="r-project" href="/guides/r">
+    Implementation using R's `parallel` and `doParallel` libraries. Fastest on Unix systems.
+  </Card>
+</CardGroup>
+
+## Cross-language consistency
+
+All three implementations produce numerically equivalent results:
+
+- Python and MATLAB agree to within 10⁻¹³ on average, with standard deviation at most 10⁻¹⁰
+- Python and R agree to within 10⁻¹¹ on average, with standard deviation at most 10⁻⁹
+
+This means you can switch between languages without affecting your scientific results.
+
+## Citation
+
+This toolbox is companion to the following paper, which should be cited for all academic use:
+
+> Prerau MJ, Brown RE, Bianchi MT, Ellenbogen JM, Purdon PL. "Sleep Neurophysiological Dynamics Through the Lens of Multitaper Spectral Analysis." *Physiology (Bethesda)*. 2017 Jan;32(1):60–92. DOI: [10.1152/physiol.00062.2015](https://doi.org/10.1152/physiol.00062.2015). PubMed PMID: 27927806.
+
+See the [citations page](/reference/citations) for full reference details.
+
+<Note>
+  Video tutorials describing the theory of spectral estimation and demonstrating how multitaper spectral estimation works are available at [http://sleepeeg.org/multitaper](http://sleepeeg.org/multitaper) on the Prerau Lab website.
+</Note>

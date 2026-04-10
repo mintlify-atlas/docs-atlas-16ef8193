@@ -1,0 +1,125 @@
+---
+title: "Python API reference: multitaper_spectrogram()"
+description: "Complete parameter and return value reference for the Python multitaper_spectrogram function in multitaper_spectrogram_python.py."
+---
+
+The Python implementation lives in `multitaper_spectrogram_python.py`. Import the main function with `from multitaper_spectrogram_python import multitaper_spectrogram` and call it with a 1D NumPy array of time-series data.
+
+## Function signature
+
+```python
+spect, stimes, sfreqs = multitaper_spectrogram(
+    data, fs, frequency_range=None, time_bandwidth=5, num_tapers=None,
+    window_params=None, min_nfft=0, detrend_opt='linear', multiprocess=False,
+    n_jobs=None, weighting='unity', plot_on=True, return_fig=False,
+    clim_scale=True, verbose=True, xyflip=False, ax=None
+)
+```
+
+## Parameters
+
+<ParamField path="data" type="1d np.array" required>
+  Time series data. Must be a 1-dimensional NumPy array with shape `(n,)`.
+</ParamField>
+
+<ParamField path="fs" type="float" required>
+  Sampling frequency in Hz. Determines the Nyquist limit (`fs/2`). If `frequency_range` exceeds Nyquist, it is automatically clipped.
+</ParamField>
+
+<ParamField path="frequency_range" type="list [min, max]" default="[0, fs/2]">
+  Frequency range in Hz to include in the output. Example: `[0, 25]` to analyze 0–25 Hz.
+</ParamField>
+
+<ParamField path="time_bandwidth" type="float" default="5">
+  Time-half bandwidth product (TW). Controls spectral resolution: frequency resolution = 2×TW / window_size_seconds. Higher TW reduces variance but lowers frequency resolution.
+</ParamField>
+
+<ParamField path="num_tapers" type="int" default="floor(2*time_bandwidth) - 1">
+  Number of DPSS tapers. The optimal value is `floor(2*time_bandwidth) - 1`. A warning is printed if a non-optimal value is used.
+</ParamField>
+
+<ParamField path="window_params" type="list [size, step]" default="[5, 1]">
+  `[window_size_seconds, step_size_seconds]`. Controls temporal resolution. Larger windows improve frequency resolution but reduce temporal resolution.
+</ParamField>
+
+<ParamField path="min_nfft" type="int" default="0">
+  Minimum FFT size. Zero-pads each window to the nearest power of 2 at or above this value. Use to increase frequency-axis interpolation.
+</ParamField>
+
+<ParamField path="detrend_opt" type="string" default="'linear'">
+  Detrending applied to each window: `'linear'` (remove linear trend), `'constant'` (subtract mean), `'off'` (no detrending).
+</ParamField>
+
+<ParamField path="multiprocess" type="bool" default="False">
+  Enable parallel computation using `joblib`. Set `True` for long recordings with many windows.
+</ParamField>
+
+<ParamField path="n_jobs" type="int" default="None">
+  Number of CPU cores for multiprocessing. `None` uses all available CPUs minus 1. Ignored when `multiprocess=False`.
+</ParamField>
+
+<ParamField path="weighting" type="str" default="'unity'">
+  Taper weighting: `'unity'` (equal weights), `'eigen'` (eigenvalue weights), `'adapt'` (adaptive weights for colored noise).
+</ParamField>
+
+<ParamField path="plot_on" type="bool" default="True">
+  Plot the spectrogram after computation using matplotlib.
+</ParamField>
+
+<ParamField path="return_fig" type="bool" default="False">
+  If `True` and `plot_on=True`, the function returns a `(fig, ax)` tuple as a fourth return value.
+</ParamField>
+
+<ParamField path="clim_scale" type="bool" default="True">
+  Auto-scale the colormap from the 5th to 98th percentile of the spectrogram values.
+</ParamField>
+
+<ParamField path="verbose" type="bool" default="True">
+  Print computed spectrogram properties (resolution, window size, NFFT, etc.) before computation.
+</ParamField>
+
+<ParamField path="xyflip" type="bool" default="False">
+  Transpose the output `mt_spectrogram` matrix (swap time and frequency axes).
+</ParamField>
+
+<ParamField path="ax" type="matplotlib Axes" default="None">
+  Existing matplotlib Axes object to plot into. If `None`, a new figure is created.
+</ParamField>
+
+## Returns
+
+<ResponseField name="mt_spectrogram" type="np.array (F×T)">
+  Spectral power matrix. Rows are frequency bins, columns are time bins. Units: power/Hz.
+</ResponseField>
+
+<ResponseField name="stimes" type="np.array (1×T)">
+  Time points in seconds corresponding to the center of each spectral window.
+</ResponseField>
+
+<ResponseField name="sfreqs" type="np.array (1×F)">
+  Frequency values in Hz for each row of `mt_spectrogram`.
+</ResponseField>
+
+## Helper: nanpow2db
+
+```python
+ydB = nanpow2db(y)
+```
+
+Converts power values to decibels. Zeros and negative values are replaced with `NaN` instead of producing `-inf` or errors. Used internally for plotting.
+
+<ParamField path="y" type="float or array-like">
+  Power values to convert.
+</ParamField>
+
+<ResponseField name="ydB" type="float or np.array">
+  Values in dB (10 × log10(y)), with zeros/negatives as NaN.
+</ResponseField>
+
+<Tip>
+  For most EEG applications, `time_bandwidth=5` and `num_tapers=9` (the default) provide a good balance of frequency resolution and variance reduction.
+</Tip>
+
+<Note>
+  See the [parameters guide](/concepts/parameters) for detailed explanations of how each parameter affects spectral resolution and variance.
+</Note>

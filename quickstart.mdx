@@ -1,80 +1,157 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: "Quickstart: run your first multitaper spectrogram"
+description: "Install dependencies, copy the Python implementation, and run your first multitaper spectrogram on a chirp signal in under five minutes."
 ---
 
-## Get started in three steps
+This guide walks you through installing the Python implementation of the Multitaper Toolbox and running a complete working example. Tabs at the end of each relevant step also show the equivalent MATLAB and R code.
 
-Get your documentation site running locally and make your first customization.
+<Steps>
+  <Step title="Install Python dependencies">
+    Install all required packages with pip:
 
-### Step 1: Set up your local environment
+    ```bash
+    pip install numpy scipy matplotlib joblib colorcet
+    ```
 
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
+    <Note>
+      `colorcet` is a required import in `multitaper_spectrogram_python.py` — the file will fail to load without it. The `requirements.txt` in the `python/` directory lists `joblib`, `matplotlib`, `numpy`, and `scipy`; add `colorcet` alongside those.
+    </Note>
+  </Step>
 
-### Step 2: Deploy your changes
+  <Step title="Get the implementation file">
+    The toolbox is a single self-contained file. Download or copy `multitaper_spectrogram_python.py` from the repository into your working directory:
 
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
+    ```bash
+    curl -O https://raw.githubusercontent.com/preraulab/multitaper_toolbox/master/python/multitaper_spectrogram_python.py
+    ```
 
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
+    Place the file in the same directory as your script, or add its location to your Python path.
+  </Step>
 
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
+  <Step title="Run the chirp example">
+    The following example generates a 10-minute logarithmic chirp signal sweeping from 1 Hz to 20 Hz, then computes and plots the multitaper spectrogram.
 
-### Step 3: Go live
+    <Tabs>
+      <Tab title="Python">
+        ```python
+        from multitaper_spectrogram_python import multitaper_spectrogram
+        import numpy as np
+        from scipy.signal import chirp
 
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
+        # Set spectrogram params
+        fs = 200                  # Sampling frequency (Hz)
+        frequency_range = [0, 25] # Limit frequencies from 0 to 25 Hz
+        time_bandwidth = 3        # Set time-half bandwidth
+        num_tapers = 5            # Set number of tapers (optimal is time_bandwidth*2 - 1)
+        window_params = [4, 1]    # Window size is 4s with step size of 1s
+        min_nfft = 0              # No minimum nfft
+        detrend_opt = 'constant'  # Detrend each window by subtracting the average
+        multiprocess = True       # Use multiprocessing
+        n_jobs = 3                # Use 3 cores in multiprocessing
+        weighting = 'unity'       # Weight each taper at 1
+        plot_on = True            # Plot spectrogram
+        return_fig = False        # Do not return plotted spectrogram
+        clim_scale = False        # Do not auto-scale colormap
+        verbose = True            # Print extra info
+        xyflip = False            # Do not transpose spect output matrix
+
+        # Generate sample chirp data
+        t = np.arange(1/fs, 600, 1/fs)  # 10-min time array from 1/fs to 600 stepping by 1/fs
+        f_start = 1                       # Chirp freq range min (Hz)
+        f_end = 20                        # Chirp freq range max (Hz)
+        data = chirp(t, f_start, t[-1], f_end, 'logarithmic')
+
+        # Compute the multitaper spectrogram
+        spect, stimes, sfreqs = multitaper_spectrogram(data, fs, frequency_range, time_bandwidth, num_tapers, window_params, min_nfft, detrend_opt, multiprocess, n_jobs, weighting, plot_on, return_fig, clim_scale, verbose, xyflip)
+        ```
+      </Tab>
+      <Tab title="MATLAB">
+        ```matlab
+        Fs = 200;                  % Sampling frequency
+        frequency_range = [0 25];  % Limit frequencies from 0 to 25 Hz
+        taper_params = [3 5];      % Time bandwidth and number of tapers
+        window_params = [4 1];     % Window size is 4s with step size of 1s
+        min_nfft = 0;              % No minimum nfft
+        detrend_opt = 'constant';  % Detrend each window by subtracting the average
+        weighting = 'unity';       % Weight each taper at 1
+        plot_on = true;            % Plot spectrogram
+        verbose = true;            % Print extra info
+
+        % Generate sample chirp data
+        t = 1/Fs:1/Fs:600;         % Create 10 minutes of data
+        f_start = 1; f_end = 20;   % Set chirp range in Hz
+        data = chirp(t, f_start, t(end), f_end, 'logarithmic');
+
+        % Compute the multitaper spectrogram
+        [spect, stimes, sfreqs] = multitaper_spectrogram(data, Fs, frequency_range, taper_params, window_params, min_nfft, detrend_opt, weighting, plot_on, verbose);
+        ```
+      </Tab>
+      <Tab title="R">
+        ```r
+        install.packages("signal")
+        library(signal)  # get signal library for chirp function
+
+        # Set spectrogram params
+        fs = 200                      # Sampling frequency
+        frequency_range = c(0, 25)    # Limit frequencies from 0 to 25 Hz
+        time_bandwidth = 3            # Set time-half bandwidth
+        num_tapers = 5                # Set number of tapers (optimal is time_bandwidth*2 - 1)
+        window_params = c(4, 1)       # Window size is 4s with step size of 1s
+        min_nfft = 0                  # No minimum nfft
+        weighting = 'unity'           # Weight each taper at 1
+        detrend_opt = 'constant'      # Detrend each window by subtracting the average
+        parallel = TRUE               # Use multiprocessing
+        num_workers = 3               # Use 3 cores in multiprocessing
+        plot_on = TRUE                # Plot spectrogram
+        verbose = TRUE                # Print extra info
+        xyflip = FALSE                # Do not transpose spect output matrix
+
+        # Generate sample chirp data
+        t = seq(1/fs, 600, by=1/fs)  # 10-min time array from 1/fs to 600 stepping by 1/fs
+        f_start = 1                   # Set chirp freq range min (Hz)
+        f_end = 20                    # Set chirp freq range max (Hz)
+        data = chirp(t, f_start, tail(t, n=1), f_end, 'logarithmic')
+
+        # Compute the multitaper spectrogram
+        results = multitaper_spectrogram_R(data, fs, frequency_range, time_bandwidth, num_tapers, window_params, min_nfft, weighting, detrend_opt, parallel, num_workers, plot_on, verbose, xyflip)
+        spect = results[[1]]
+        stimes = results[[2]]
+        sfreqs = results[[3]]
+        ```
+      </Tab>
+    </Tabs>
+  </Step>
+
+  <Step title="Understand the return values">
+    The function returns three arrays:
+
+    | Return value | Shape | Description |
+    |---|---|---|
+    | `spect` | F × T matrix | Power at each time-frequency point. Rows are frequency bins, columns are time windows. |
+    | `stimes` | 1D array | Center time of each window in seconds. Length T. |
+    | `sfreqs` | 1D array | Frequency of each bin in Hz. Length F, spanning `frequency_range`. |
+
+    In the chirp example with the parameters above, `spect` will have approximately 101 rows (frequency bins from 0 to 25 Hz) and 597 columns (time windows).
+
+    <Tip>
+      The optimal number of tapers for a given time-half bandwidth product is `floor(2 * time_bandwidth) - 1`. With `time_bandwidth = 3`, the optimal number of tapers is 5 — which matches `num_tapers = 5` in the example above.
+    </Tip>
+  </Step>
+</Steps>
 
 ## Next steps
 
-Now that you have your docs running, explore these key features:
-
 <CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
+  <Card title="Python guide" icon="python" href="/guides/python">
+    Full usage details, EDF data loading, and multiprocessing configuration for the Python implementation.
+  </Card>
+  <Card title="MATLAB guide" icon="square-m" href="/guides/matlab">
+    Usage for both `multitaper_spectrogram` and the faster C-accelerated `multitaper_spectrogram_mex`.
+  </Card>
+  <Card title="R guide" icon="r-project" href="/guides/r">
+    Full usage details and parallel processing configuration for the R implementation.
+  </Card>
+  <Card title="Parameters reference" icon="sliders" href="/concepts/parameters">
+    Detailed explanations of every parameter: time-bandwidth product, tapers, window size, detrending, and weighting.
+  </Card>
 </CardGroup>
-
-<Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
-</Note>

@@ -1,0 +1,58 @@
+---
+title: "Load EEG data from EDF files for spectral analysis"
+description: "Load EEG signals from EDF files using pyEDFlib and pass them directly to the multitaper spectrogram function for analysis of clinical recordings."
+---
+
+EDF (European Data Format) is a common format for storing clinical EEG and polysomnography recordings. The `multitaper_spectrogram` function accepts any 1D NumPy array, so you can load data from EDF files using pyEDFlib and pass the resulting array directly.
+
+## Install pyEDFlib
+
+<CodeGroup>
+  ```bash pip
+  pip install pyEDFlib
+  ```
+
+  ```bash conda
+  conda install -c conda-forge pyedflib
+  ```
+</CodeGroup>
+
+## Read signals from an EDF file
+
+```python
+from pyedflib import highlevel
+
+signals, signal_headers, header = highlevel.read_edf('test.edf')
+
+C3_data = signals[2]
+C3_fs = signal_headers[2]['sample_rate']
+```
+
+`highlevel.read_edf` returns three objects:
+
+- `signals` — a 2D NumPy array where each row is one channel's time-series data
+- `signal_headers` — a list of dicts, one per channel, containing metadata such as label, sample rate, physical dimension, and scaling factors
+- `header` — the global EDF file header (recording date, patient info, etc.)
+
+<Tip>
+  To identify which index corresponds to your channel of interest, inspect the `label` field of each signal header:
+
+  ```python
+  for i, sh in enumerate(signal_headers):
+      print(i, sh['label'])
+  ```
+
+  Use the printed index to select the correct row from `signals` and the matching entry from `signal_headers`.
+</Tip>
+
+## Compute the spectrogram
+
+Pass the extracted channel data and its sampling frequency directly to `multitaper_spectrogram`:
+
+```python
+spect, stimes, sfreqs = multitaper_spectrogram(C3_data, C3_fs)
+```
+
+<Note>
+  The `multitaper_spectrogram` function only supports single-channel input — `data` must be a 1D NumPy array. Extract one row from `signals` at a time and call the function separately for each channel you want to analyze.
+</Note>

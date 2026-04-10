@@ -1,0 +1,113 @@
+---
+title: "Multitaper spectrogram: Python implementation guide"
+description: "Compute and visualize multitaper spectrograms in Python using NumPy, SciPy, and optional multiprocessing for fast analysis of time-series data."
+---
+
+The Python implementation of the multitaper spectrogram uses NumPy array operations with no explicit for loops, making it efficient for large recordings. It supports optional multiprocessing via `joblib`, automatic colormap scaling, and direct integration with matplotlib for visualization.
+
+## Installation
+
+<Steps>
+  <Step title="Install required packages">
+    Install all dependencies via pip:
+
+    ```bash
+    pip install numpy scipy matplotlib joblib colorcet
+    ```
+
+    <Note>
+      `colorcet` is imported directly by `multitaper_spectrogram_python.py` and is required — the file will not load without it. The `requirements.txt` in the `python/` folder lists the other four packages; install all five together.
+    </Note>
+  </Step>
+
+  <Step title="Download the source file">
+    Download `multitaper_spectrogram_python.py` from the [multitaper_toolbox repository](https://github.com/preraulab/multitaper_toolbox) and place it in your working directory (or somewhere on your Python path).
+  </Step>
+
+  <Step title="Import the function">
+    ```python
+    from multitaper_spectrogram_python import multitaper_spectrogram
+    ```
+  </Step>
+</Steps>
+
+## Chirp example
+
+The following example generates a 10-minute logarithmic chirp signal sweeping from 1 Hz to 20 Hz, then computes and plots its multitaper spectrogram.
+
+```python
+from multitaper_spectrogram_python import multitaper_spectrogram  # import multitaper_spectrogram function from the multitaper_spectrogram_python.py file
+import numpy as np  # import numpy
+from scipy.signal import chirp  # import chirp generation function
+
+# Set spectrogram params
+fs = 200  # Sampling Frequency
+frequency_range = [0, 25]  # Limit frequencies from 0 to 25 Hz
+time_bandwidth = 3  # Set time-half bandwidth
+num_tapers = 5  # Set number of tapers (optimal is time_bandwidth*2 - 1)
+window_params = [4, 1]  # Window size is 4s with step size of 1s
+min_nfft = 0  # No minimum nfft
+detrend_opt = 'constant'  # detrend each window by subtracting the average
+multiprocess = True  # use multiprocessing
+n_jobs = 3  # use 3 cores in multiprocessing
+weighting = 'unity'  # weight each taper at 1
+plot_on = True  # plot spectrogram
+return_fig = False  # do not return plotted spectrogram
+clim_scale = False # do not auto-scale colormap
+verbose = True  # print extra info
+xyflip = False  # do not transpose spect output matrix
+
+# Generate sample chirp data
+t = np.arange(1/fs, 600, 1/fs)  # Create 10 min time array from 1/fs to 600 stepping by 1/fs
+f_start = 1  # Set chirp freq range min (Hz)
+f_end = 20  # Set chirp freq range max (Hz)
+data = chirp(t, f_start, t[-1], f_end, 'logarithmic')
+
+# Compute the multitaper spectrogram
+spect, stimes, sfreqs = multitaper_spectrogram(data, fs, frequency_range, time_bandwidth, num_tapers, window_params, min_nfft, detrend_opt, multiprocess, n_jobs,
+                                               weighting, plot_on, return_fig, clim_scale, verbose, xyflip)
+```
+
+## Return values
+
+The function returns three arrays:
+
+| Variable | Shape | Description |
+|----------|-------|-------------|
+| `spect` | F × T array | Spectral power matrix — rows are frequency bins, columns are time windows |
+| `stimes` | 1D array | Center time (in seconds) of each spectral window (length T) |
+| `sfreqs` | 1D array | Frequency values (in Hz) for each row of `spect` (length F) |
+
+## Plotting
+
+<Note>
+  When `plot_on=True`, the function automatically generates a spectrogram plot using a dB colorscale (power spectral density in dB). The colormap used is `cet_rainbow4` from the `colorcet` package.
+</Note>
+
+<Tip>
+  Set `clim_scale=True` to automatically scale the colormap range to the 5th–98th percentile of the spectrogram data. This is useful for suppressing outliers and getting a clean visualization without manually tuning color limits.
+</Tip>
+
+<Tip>
+  Pass an existing matplotlib `Axes` object via the `ax` parameter to render the spectrogram into a subplot or a pre-configured figure:
+
+  ```python
+  import matplotlib.pyplot as plt
+
+  fig, axes = plt.subplots(1, 2, figsize=(14, 4))
+  multitaper_spectrogram(data, fs, ax=axes[0])
+  multitaper_spectrogram(data2, fs, ax=axes[1])
+  plt.show()
+  ```
+</Tip>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Parallel processing" href="/guides/parallel-processing">
+    Speed up computation on long recordings using multiprocessing.
+  </Card>
+  <Card title="Reading EDF files" href="/guides/edf-data">
+    Load EEG data from EDF files and pass it to the multitaper spectrogram.
+  </Card>
+</CardGroup>

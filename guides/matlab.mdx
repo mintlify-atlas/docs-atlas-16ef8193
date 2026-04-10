@@ -1,0 +1,97 @@
+---
+title: "Multitaper spectrogram: MATLAB implementation guide"
+description: "Compute multitaper spectrograms in MATLAB using the double-precision or high-speed C MEX implementation, with built-in parallel processing support."
+---
+
+The MATLAB implementation provides two functions for computing the multitaper spectrogram: `multitaper_spectrogram` (double-precision, parallelized) and `multitaper_spectrogram_mex` (C MEX, single-precision, significantly faster). Both accept identical inputs and return the same outputs — the only differences are computation speed and numeric precision.
+
+## Requirements
+
+The following MATLAB toolboxes are required:
+
+- **Signal Processing Toolbox**
+- **Image Processing Toolbox**
+- **Statistics and Machine Learning Toolbox**
+
+Optional (for parallel processing):
+
+- **Parallel Computing Toolbox**
+- **MATLAB Parallel Server**
+
+## Setup
+
+Add both the `matlab/` folder and its `mex_files/` subfolder to your MATLAB path:
+
+```matlab
+addpath('path/to/multitaper_toolbox/matlab')
+addpath('path/to/multitaper_toolbox/matlab/mex_files')
+```
+
+You can also use **Home → Set Path** in the MATLAB IDE to add these directories permanently.
+
+## Functions
+
+Both functions share the same call signature:
+
+```matlab
+% Standard double-precision implementation (parallelized)
+[spect, stimes, sfreqs] = multitaper_spectrogram(data, Fs, frequency_range, taper_params, window_params, min_NFFT, detrend_opt, weighting, plot_on, verbose)
+
+% C MEX implementation (single-precision, much faster)
+[spect, stimes, sfreqs] = multitaper_spectrogram_mex(data, Fs, frequency_range, taper_params, window_params, min_NFFT, detrend_opt, weighting, plot_on, verbose)
+```
+
+## Chirp example
+
+The following example generates a 10-minute logarithmic chirp signal and computes its multitaper spectrogram:
+
+```matlab
+Fs=200; %Sampling Frequency
+frequency_range=[0 25]; %Limit frequencies from 0 to 25 Hz
+taper_params=[3 5]; %Time bandwidth and number of tapers
+window_params=[4 1]; %Window size is 4s with step size of 1s
+min_nfft=0; %No minimum nfft
+detrend_opt='constant'; %detrend each window by subtracting the average
+weighting='unity'; %weight each taper at 1
+plot_on=true; %plot spectrogram
+verbose=true; %print extra info
+
+%Generate sample chirp data
+t=1/Fs:1/Fs:600; %Create 10 minutes of data
+f_start=1;f_end=20; % Set chirp range in Hz
+data=chirp(t,f_start,t(end),f_end,'logarithmic');
+
+%Compute the multitaper spectrogram
+[spect,stimes,sfreqs] = multitaper_spectrogram(data,Fs,frequency_range, taper_params, window_params, min_nfft, detrend_opt, weighting, plot_on, verbose);
+%Or use multitaper_spectrogram_mex
+% [spect,stimes,sfreqs] = multitaper_spectrogram_mex(data,Fs,frequency_range, taper_params, window_params, min_nfft, detrend_opt, weighting, plot_on, verbose);
+```
+
+<Note>
+  Both `multitaper_spectrogram` and `multitaper_spectrogram_mex` accept identical inputs. The MEX version is considerably faster due to its C implementation but reduces data precision from double to single. For most EEG and sleep recording applications, single precision is sufficient.
+</Note>
+
+## MEX files
+
+The `mex_files/` directory contains pre-compiled C MEX binaries for each platform:
+
+| File extension | Platform |
+|----------------|----------|
+| `.mexmaci64` | 64-bit macOS |
+| `.mexw64` | 64-bit Windows |
+| `.mexa64` | 64-bit Linux |
+
+<Warning>
+  The `mex_files/` directory **must be on the MATLAB path** for `multitaper_spectrogram_mex` to work. If you receive an "Undefined function" error when calling the MEX version, verify that the directory is correctly added to your path.
+</Warning>
+
+## Next steps
+
+<CardGroup cols={2}>
+  <Card title="Parallel processing" href="/guides/parallel-processing">
+    Pre-initialize a parallel pool or set a specific core count before calling the function.
+  </Card>
+  <Card title="MATLAB API reference" href="/reference/matlab-api">
+    Full parameter and return value documentation for both MATLAB functions.
+  </Card>
+</CardGroup>

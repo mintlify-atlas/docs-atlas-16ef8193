@@ -1,0 +1,118 @@
+---
+title: "Speed up spectrograms with parallel processing"
+description: "Use multiprocessing in Python, MATLAB, and R to speed up multitaper spectrogram computation on long recordings with many time windows."
+---
+
+Parallel processing can substantially reduce computation time when working with long recordings or small window step sizes, both of which result in a large number of windows to process. Each window's spectrum is computed independently, making the multitaper spectrogram well-suited to parallelization. The examples below show how to enable and configure parallel processing in each supported language.
+
+<Tabs>
+  <Tab title="Python">
+    Set `multiprocess=True` and provide the desired number of cores via `n_jobs`:
+
+    ```python
+    spect, stimes, sfreqs = multitaper_spectrogram(
+        data, fs,
+        multiprocess=True,
+        n_jobs=4
+    )
+    ```
+
+    **Behavior of `n_jobs`:**
+
+    - If `multiprocess=True` and `n_jobs=None` (the default), the function uses all available CPUs minus 1.
+    - If the value provided for `n_jobs` exceeds the number of available CPUs, it automatically falls back to all available CPUs minus 1.
+
+    <Warning>
+      Using all available cores means your machine will have no remaining CPU capacity for other tasks while the function is running. Set `n_jobs` to a value less than your total core count if you need your system to remain responsive.
+    </Warning>
+
+    **Full example with multiprocessing enabled:**
+
+    ```python
+    from multitaper_spectrogram_python import multitaper_spectrogram
+    import numpy as np
+    from scipy.signal import chirp
+
+    fs = 200
+    t = np.arange(1/fs, 600, 1/fs)
+    data = chirp(t, 1, t[-1], 20, 'logarithmic')
+
+    spect, stimes, sfreqs = multitaper_spectrogram(
+        data, fs,
+        frequency_range=[0, 25],
+        time_bandwidth=3,
+        num_tapers=5,
+        window_params=[4, 1],
+        multiprocess=True,
+        n_jobs=4
+    )
+    ```
+  </Tab>
+
+  <Tab title="MATLAB">
+    In MATLAB, parallel processing is used **automatically by default** with the default number of cores for your system. No additional configuration is required.
+
+    If you want to pre-initialize a parallel pool or control the number of workers before calling the function, use one of the following approaches:
+
+    **Set a specific number of workers:**
+
+    ```matlab
+    p = parcluster;              % Get information about current cluster
+    num_pools = p.NumWorkers;    % Set to max workers, or change to a specific number
+    parpool(num_pools);          % Instantiate workers
+    ```
+
+    **Start workers with the cluster default:**
+
+    ```matlab
+    gcp;  % Start workers with default number for cluster
+    ```
+
+    Pre-initializing the pool avoids startup overhead on the first call to `multitaper_spectrogram`, which can be useful in scripts that call the function multiple times.
+  </Tab>
+
+  <Tab title="R">
+    Set `parallel=TRUE` and specify the number of workers with `num_workers`:
+
+    ```r
+    results = multitaper_spectrogram_R(
+      data, fs,
+      parallel = TRUE,
+      num_workers = 4
+    )
+    ```
+
+    **Behavior of `num_workers`:**
+
+    - If `parallel=TRUE` and `num_workers` is not set (or is `FALSE`), the function uses all available cores minus 1.
+    - If `num_workers` exceeds the number of available cores, it falls back to all available cores minus 1.
+
+    **Platform performance:**
+
+    Unix-based systems (macOS and Linux) benefit more from parallel processing because R uses fork-based process duplication on those platforms, allowing workers to share memory with the parent process. Windows machines still see speedup, but the overhead of spawning separate processes reduces the gain.
+
+    **Full example with parallel processing enabled:**
+
+    ```r
+    source("multitaper_spectrogram_R.R")
+    library(signal)
+
+    fs = 200
+    t = seq(1/fs, 600, by=1/fs)
+    data = chirp(t, 1, tail(t, n=1), 20, 'logarithmic')
+
+    results = multitaper_spectrogram_R(
+      data, fs,
+      frequency_range = c(0, 25),
+      time_bandwidth = 3,
+      num_tapers = 5,
+      window_params = c(4, 1),
+      parallel = TRUE,
+      num_workers = 4
+    )
+    spect = results[[1]]
+    stimes = results[[2]]
+    sfreqs = results[[3]]
+    ```
+  </Tab>
+</Tabs>

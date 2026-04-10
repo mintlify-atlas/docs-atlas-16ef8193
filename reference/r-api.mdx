@@ -1,0 +1,98 @@
+---
+title: "R API reference: multitaper_spectrogram_R()"
+description: "Complete parameter and return value reference for the R multitaper_spectrogram_R function in multitaper_spectrogram_R.R."
+---
+
+The R implementation is defined in `multitaper_spectrogram_R.R`. Source the file to load the function, which automatically installs required packages (`multitaper`, `pracma`, `fields`, `doParallel`, `parallel`, `png`) if not already present.
+
+## Usage
+
+```r
+source("multitaper_spectrogram_R.R")
+
+results <- multitaper_spectrogram_R(data, fs, frequency_range, time_bandwidth,
+                                    num_tapers, window_params, min_nfft,
+                                    weighting, detrend_opt, parallel,
+                                    num_workers, plot_on, verbose, xyflip)
+spect   <- results[[1]]
+stimes  <- results[[2]]
+sfreqs  <- results[[3]]
+```
+
+## Parameters
+
+<ParamField path="data" type="numeric vector" required>
+  Time series data as a 1D numeric vector.
+</ParamField>
+
+<ParamField path="fs" type="numeric" required>
+  Sampling frequency in Hz.
+</ParamField>
+
+<ParamField path="frequency_range" type="numeric vector" default="NULL">
+  `c(min_frequency, max_frequency)` in Hz. When `NULL`, defaults to `c(0, fs/2)`.
+</ParamField>
+
+<ParamField path="time_bandwidth" type="numeric" default="5">
+  Time-half bandwidth product (TW).
+</ParamField>
+
+<ParamField path="num_tapers" type="numeric" default="NULL">
+  Number of DPSS tapers. Defaults to `floor(2*time_bandwidth - 1)` when `NULL`.
+</ParamField>
+
+<ParamField path="window_params" type="numeric vector" default="c(5, 1)">
+  `c(window_size_seconds, step_size_seconds)`.
+</ParamField>
+
+<ParamField path="min_nfft" type="numeric" default="0">
+  Minimum NFFT size. Zero-pads to nearest 2^x at or above this value.
+</ParamField>
+
+<ParamField path="weighting" type="character" default="'unity'">
+  `'unity'`, `'eigen'`, or `'adapt'`.
+</ParamField>
+
+<ParamField path="detrend_opt" type="character" default="'linear'">
+  `'linear'`, `'constant'`, or `'off'`.
+</ParamField>
+
+<ParamField path="parallel" type="logical" default="FALSE">
+  Enable parallel processing via `doParallel`.
+</ParamField>
+
+<ParamField path="num_workers" type="numeric" default="FALSE">
+  Number of parallel workers. When `FALSE` and `parallel=TRUE`, uses all available cores minus 1. Ignored when `parallel=FALSE`.
+</ParamField>
+
+<ParamField path="plot_on" type="logical" default="TRUE">
+  Plot the spectrogram after computation.
+</ParamField>
+
+<ParamField path="verbose" type="logical" default="TRUE">
+  Print spectrogram properties before computation.
+</ParamField>
+
+<ParamField path="xyflip" type="logical" default="FALSE">
+  Transpose the output spectrogram matrix.
+</ParamField>
+
+## Returns
+
+The function returns a list with three elements:
+
+<ResponseField name="results[[1]]" type="matrix">
+  Spectral power matrix (`mt_spectrogram`). Rows are frequency bins, columns are time bins.
+</ResponseField>
+
+<ResponseField name="results[[2]]" type="numeric vector">
+  Time points in seconds (`stimes`) for the center of each spectral window.
+</ResponseField>
+
+<ResponseField name="results[[3]]" type="numeric vector">
+  Frequency values in Hz (`sfreqs`) for each row of the spectrogram.
+</ResponseField>
+
+<Note>
+  Parallel processing speedup is faster on Unix-based systems (Mac, Linux) due to fork-based process duplication. Windows machines benefit less. See the [parallel processing guide](/guides/parallel-processing) for details.
+</Note>
